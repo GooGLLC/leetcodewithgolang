@@ -5,13 +5,228 @@ import (
 	"sort"
 )
 
+func max(i int, j int) int {
+	if i > j {
+		return i
+	} else {
+		return j
+	}
+}
+
 func main() {
-	res := isMatch("acdcb", "a*c?b")
-	fmt.Print(res)
+	//res := merge([][]int{"eat","tea","tan","ate","nat","bat"})
+	//fmt.Print(res)
+}
+
+func canJump(nums []int) bool {
+	possibleBest := 0
+	for i := 0; i < len(nums); i++ {
+		possibleBest = max(possibleBest, i+nums[i])
+		if possibleBest <= i {
+			return false
+		} else if possibleBest >= len(nums)-1 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func merge(intervals [][]int) [][]int {
+	if len(intervals) <= 1 {
+		return intervals
+	}
+
+	res := make([][]int, 0)
+	sort.Slice(intervals, func(i, j int) bool {
+		if intervals[i][0] < intervals[j][0] {
+			return true
+		} else {
+			return false
+		}
+	})
+
+	start := intervals[0][0]
+	end := intervals[0][1]
+	for _, v := range intervals {
+		newStart := v[0]
+		newEnd := v[1]
+		if newStart > end {
+			res = append(res, []int{start, end})
+			start = newStart
+			end = newEnd
+		} else {
+			if newEnd > end {
+				end = newEnd
+			}
+		}
+	}
+
+	res = append(res, []int{start, end})
+	return res
+}
+
+func maxSubArray(nums []int) int {
+	best := nums[0]
+	dp := make([]int, len(nums)) // ending with this element, what is the max value
+	// no need this dp i, just two element will be enough
+	for i := 0; i < len(nums); i++ {
+		if i == 0 {
+			dp[i] = nums[i]
+		} else {
+			dp[i] = nums[i]
+			if dp[i-1]+nums[i] > dp[i] {
+				dp[i] = dp[i-1] + nums[i]
+			}
+		}
+
+		if best < dp[i] {
+			best = dp[i]
+		}
+	}
+
+	return best
+}
+
+func myPow(x float64, n int) float64 {
+	if n == 0 {
+		return 1
+	} else if n < 0 {
+		return myPow(1/x, -n)
+	} else if n%2 != 0 {
+		return myPow(x, n-1) * x
+	} else {
+		return myPow(x*x, n/2)
+	}
+}
+
+func groupAnagrams(strs []string) [][]string {
+	var res [][]string
+	kmap := make(map[string][]string)
+	for _, v := range strs {
+		code := countEcode(v)
+		if _, ok := kmap[code]; !ok {
+			kmap[code] = make([]string, 0)
+		}
+
+		kmap[code] = append(kmap[code], v)
+	}
+
+	for _, v := range kmap {
+		res = append(res, v)
+	}
+
+	return res
+}
+
+func countEcode(s string) string {
+	res := make([]int, 26)
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		res[c-'a']++
+	}
+
+	r := ""
+	for i := 0; i < 26; i++ {
+		r += fmt.Sprintf("%s%d", string('a'+i), res[i])
+	}
+	return r
+}
+
+func rotate(matrix [][]int) {
+	n := len(matrix)
+	for i := 0; i < n/2; i++ {
+		for j := 0; j < n; j++ {
+			t := matrix[i][j]
+			matrix[i][j] = matrix[n-i-1][j]
+			matrix[n-i-1][j] = t
+		}
+	}
+	for i := 0; i < n; i++ {
+		for j := 0; j < i; j++ {
+			t := matrix[i][j]
+			matrix[i][j] = matrix[j][i]
+			matrix[j][i] = t
+		}
+	}
+}
+
+func permuteUnique(nums []int) [][]int {
+	sort.Ints(nums)
+	var res [][]int
+	len := len(nums)
+	used := make([]bool, len)
+	permuteUniquedfs(&res, nums, &used, []int{})
+	return res
+}
+
+func permuteUniquedfs(res *[][]int, nums []int, used *[]bool, cur []int) {
+	for i := 0; i < len(nums); i++ {
+		if i != 0 && nums[i] == nums[i-1] && !(*used)[i-1] {
+			continue
+		}
+
+		if !(*used)[i] {
+			(*used)[i] = true
+			next := append(cur, nums[i])
+			if len(next) == len(nums) {
+				temp := make([]int, len(nums))
+				copy(temp, next)
+				*res = append((*res), temp)
+			} else {
+				permuteUniquedfs(res, nums, used, next)
+			}
+
+			(*used)[i] = false
+		}
+	}
+}
+
+func permute(nums []int) [][]int {
+	var res [][]int
+	len := len(nums)
+	used := make([]bool, len)
+	permutedfs(&res, nums, &used, []int{})
+	return res
+}
+
+func permutedfs(res *[][]int, nums []int, used *[]bool, cur []int) {
+	for i := 0; i < len(nums); i++ {
+		if !(*used)[i] {
+			(*used)[i] = true
+			next := append(cur, nums[i])
+			if len(next) == len(nums) {
+				*res = append((*res), next)
+			} else {
+				permutedfs(res, nums, used, next)
+			}
+
+			(*used)[i] = false
+		}
+	}
 }
 
 func jump(nums []int) int {
+	count := 0
+	len := len(nums)
+	if len <= 1 {
+		return count
+	}
+	curBest := 0
+	possibleBest := 0
+	for i := 0; i < len; i++ {
+		possibleBest = max(possibleBest, i+nums[i])
+		// current stuck, has to do a jump
+		if curBest <= i {
+			count++
+			curBest = possibleBest
+			if curBest >= len-1 {
+				return count
+			}
+		}
+	}
 
+	return count
 }
 
 func isMatch(s string, p string) bool {
