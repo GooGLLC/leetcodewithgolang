@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 func max(i int, j int) int {
@@ -13,9 +14,158 @@ func max(i int, j int) int {
 	}
 }
 
+type ListNode struct {
+	Val  int
+	Next *ListNode
+}
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
 func main() {
 	//res := merge([][]int{"eat","tea","tan","ate","nat","bat"})
 	//fmt.Print(res)
+}
+
+func isSameTree(p *TreeNode, q *TreeNode) bool {
+	if p == nil || q == nil {
+		return p == q
+	} else if p.Val != q.Val {
+		return false
+	} else {
+		return isSameTree(p.Left, q.Left) && isSameTree(p.Right, q.Right)
+	}
+}
+
+func minPathSum(grid [][]int) int {
+	h := len(grid)
+	w := len(grid[0])
+	dp := make([][]int, h)
+	for i := range dp {
+		dp[i] = make([]int, w)
+	}
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if i == 0 && j == 0 {
+				dp[i][j] = grid[i][j]
+			} else if i == 0 {
+				dp[i][j] = grid[i][j] + dp[i][j-1]
+			} else if j == 0 {
+				dp[i][j] = grid[i][j] + dp[i-1][j]
+			} else {
+				dp[i][j] = grid[i][j]
+				if grid[i-1][j] > grid[i][j-1] {
+					dp[i][j] += grid[i][j-1]
+				} else {
+					dp[i][j] += grid[i-1][j]
+				}
+			}
+		}
+	}
+
+	return dp[h-1][w-1]
+}
+
+func uniquePathsWithObstacles(obstacleGrid [][]int) int {
+	h := len(obstacleGrid)
+	w := len(obstacleGrid[0])
+	dp := make([][]int, h)
+	for i := range dp {
+		dp[i] = make([]int, w)
+	}
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if obstacleGrid[i][j] == 1 {
+				dp[i][j] = 0
+			} else if i == 0 && j == 0 {
+				dp[i][j] = 1
+			} else if i == 0 {
+				dp[i][j] += dp[i][j-1]
+			} else if j == 0 {
+				dp[i][j] += dp[i-1][j]
+			} else {
+				dp[i][j] = dp[i-1][j] + dp[i][j-1]
+			}
+		}
+	}
+
+	return dp[h-1][w-1]
+}
+
+func rotateRight(head *ListNode, k int) *ListNode {
+	if k == 0 || head == nil {
+		return head
+	}
+
+	len, tail := findListLength(head)
+	k = k % len
+	if k == 0 {
+		return head
+	}
+
+	p := head
+	for i := 0; i < len-k-1; i++ {
+		p = p.Next
+	}
+	res := p.Next
+	p.Next = nil
+	tail.Next = head
+	return res
+}
+
+func findListLength(head *ListNode) (int, *ListNode) {
+	count := 0
+	for head.Next != nil {
+		count++
+		head = head.Next
+	}
+
+	return count + 1, head
+}
+
+func lengthOfLastWord(s string) int {
+	s = strings.Trim(s, " ")
+	last := strings.LastIndex(s, " ")
+	return len(s) - last - 1
+}
+
+func insert(intervals [][]int, newInterval []int) [][]int {
+	if len(intervals) == 0 {
+		return append(intervals, newInterval)
+	}
+
+	res := make([][]int, 0)
+	hasInsert := false
+	for _, v := range intervals {
+		if hasInsert {
+			res = append(res, v)
+		} else if v[1] < newInterval[0] {
+			res = append(res, v)
+		} else if v[0] > newInterval[1] {
+			res = append(res, newInterval)
+			res = append(res, v)
+			hasInsert = true
+		} else {
+			if v[0] < newInterval[0] {
+				newInterval[0] = v[0]
+			}
+
+			if v[1] > newInterval[1] {
+				newInterval[1] = v[1]
+			}
+		}
+	}
+
+	if !hasInsert {
+		res = append(res, newInterval)
+	}
+
+	return res
 }
 
 func canJump(nums []int) bool {
