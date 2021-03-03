@@ -6,14 +6,6 @@ import (
 	"strings"
 )
 
-func max(i int, j int) int {
-	if i > j {
-		return i
-	} else {
-		return j
-	}
-}
-
 type ListNode struct {
 	Val  int
 	Next *ListNode
@@ -26,8 +18,326 @@ type TreeNode struct {
 }
 
 func main() {
-	//res := merge([][]int{"eat","tea","tan","ate","nat","bat"})
-	//fmt.Print(res)
+	//input := []int{2,0,2,1,1,0}
+	res := exist([][]byte{[]byte("a")}, "a")
+	fmt.Print(res)
+}
+
+//[["A","B","C","E"],
+//["S","F","E","S"],
+//["A","D","E","E"]]
+//"ABCESEEEFS"
+func exist(board [][]byte, word string) bool {
+	h := len(board)
+	w := len(board[0])
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			used := make([][]bool, h)
+			for i := 0; i < h; i++ {
+				used[i] = make([]bool, w)
+			}
+
+			if existhelper(board, word, &used, i, j) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func existhelper(board [][]byte, word string, used *[][]bool, i int, j int) bool {
+	dxy := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+	if len(word) == 0 {
+		return true
+	}
+	if i < 0 || i >= len(board) || j < 0 || j >= len(board[0]) {
+		return false
+	}
+
+	if (*used)[i][j] {
+		return false
+	}
+
+	if word[0] != board[i][j] {
+		return false
+	}
+
+	(*used)[i][j] = true
+	for _, v := range dxy {
+		newi := v[0] + i
+		newj := v[1] + j
+		if existhelper(board, word[1:], used, newi, newj) {
+			return true
+		}
+	}
+	(*used)[i][j] = false
+	return false
+}
+
+func subsets(nums []int) [][]int {
+	res := make([][]int, 0)
+	subsetsdfs(nums, &res, make([]int, 0), 0)
+	return res
+}
+
+func subsetsdfs(nums []int, res *[][]int, cur []int, start int) {
+	if start == len(nums) {
+		tmp := make([]int, len(cur))
+		copy(tmp, cur)
+		*res = append(*res, tmp)
+	} else {
+		subsetsdfs(nums, res, cur, start+1)
+
+		cur = append(cur, nums[start])
+		subsetsdfs(nums, res, cur, start+1)
+		cur = cur[:len(cur)-1]
+
+	}
+}
+
+func combine(n int, k int) [][]int {
+	used := make([]bool, n)
+	res := make([][]int, 0)
+	combinedfs(&used, make([]int, 0), &res, k, 0)
+	return res
+}
+
+func combinedfs(used *[]bool, cur []int, res *[][]int, k int, start int) {
+	if k == 0 {
+		tmp := make([]int, len(cur))
+		copy(tmp, cur)
+		*res = append(*res, tmp)
+	} else {
+		for i := start; i < len(*used); i++ {
+			if !(*used)[i] {
+				(*used)[i] = true
+				cur = append(cur, i+1)
+				combinedfs(used, cur, res, k-1, i+1)
+				cur = cur[:len(cur)-1]
+				(*used)[i] = false
+			}
+		}
+	}
+}
+
+func minWindow(s string, t string) string {
+	dict := make(map[rune]int)
+	for _, v := range t {
+		if _, ok := dict[v]; !ok {
+			dict[v] = 1
+		} else {
+			dict[v]++
+		}
+	}
+
+	has := make(map[rune]int)
+	i := 0
+	j := 0
+	resLen := 0
+	besti := 0
+	bestj := len(s)
+	sarray := []rune(s)
+	for j < len(sarray) {
+		charC := sarray[j]
+		if v, ok := dict[charC]; ok {
+			has[charC]++
+			if has[charC] <= v {
+				resLen++
+			}
+		}
+
+		for resLen == len(t) {
+			// result is always valid here
+			if bestj-besti > j-i {
+				bestj = j
+				besti = i
+			}
+
+			lastC := sarray[i]
+			if _, ok := dict[lastC]; ok {
+				has[lastC]--
+				if has[lastC] < dict[lastC] {
+					resLen--
+				}
+			}
+			i++
+		}
+		j++
+	}
+
+	if bestj == len(s) {
+		return ""
+	}
+	return s[besti : bestj+1]
+}
+
+func swap(nums []int, i int, j int) {
+	t := nums[i]
+	nums[i] = nums[j]
+	nums[j] = t
+}
+
+func sortColors(nums []int) {
+	p := 0
+	q := len(nums) - 1
+	for i := 0; i <= q; i++ {
+		if nums[i] == 0 {
+			swap(nums, i, p)
+			p++
+		} else if nums[i] == 2 {
+			swap(nums, q, i)
+			q--
+			i--
+		} else {
+			nums[i] = 1
+		}
+	}
+}
+
+func searchMatrix(matrix [][]int, target int) bool {
+	h := len(matrix)
+	w := len(matrix[0])
+	lo := 0
+	hi := h*w - 1
+	for lo < hi {
+		mid := lo + (hi-lo)/2
+		x := mid / w
+		y := mid % w
+		v := matrix[x][y]
+		if v == target {
+			return true
+		} else if v < target {
+			lo = mid + 1
+		} else {
+			hi = mid
+		}
+	}
+
+	return matrix[lo/w][lo%w] == target
+}
+
+func setZeroes(matrix [][]int) {
+	isTopZero := false
+	isLeftZero := false
+	h := len(matrix)
+	w := len(matrix[0])
+	for j := 0; j < w; j++ {
+		if matrix[0][j] == 0 {
+			isTopZero = true
+			break
+		}
+	}
+
+	for i := 0; i < h; i++ {
+		if matrix[i][0] == 0 {
+			isLeftZero = true
+			break
+		}
+	}
+
+	for i := 1; i < h; i++ {
+		for j := 1; j < w; j++ {
+			if matrix[i][j] == 0 {
+				matrix[i][0] = 0
+				matrix[0][j] = 0
+			}
+		}
+	}
+
+	for i := 1; i < h; i++ {
+		for j := 1; j < w; j++ {
+			if matrix[i][0] == 0 || matrix[0][j] == 0 {
+				matrix[i][j] = 0
+			}
+		}
+	}
+
+	if isTopZero {
+		for j := 0; j < w; j++ {
+			matrix[0][j] = 0
+		}
+	}
+
+	if isLeftZero {
+		for i := 0; i < h; i++ {
+			matrix[i][0] = 0
+		}
+	}
+}
+
+func max(i int, j int) int {
+	if i > j {
+		return i
+	} else {
+		return j
+	}
+}
+
+func minDistance(word1 string, word2 string) int {
+	len1 := len(word1) + 1
+	len2 := len(word2) + 1
+	dp := make([][]int, len1)
+	for i := 0; i < len1; i++ {
+		dp[i] = make([]int, len2)
+	}
+
+	for i := 0; i < len1; i++ {
+		for j := 0; j < len2; j++ {
+			if i == 0 && j == 0 {
+				dp[i][j] = 0
+			} else if i == 0 {
+				dp[i][j] = j
+			} else if j == 0 {
+				dp[i][j] = i
+			} else {
+				dp[i][j] = 1 + min(min(dp[i-1][j], dp[i][j-1]), dp[i-1][j-1])
+				if word1[i-1] == word2[j-1] {
+					dp[i][j] = min(dp[i][j], dp[i-1][j-1])
+				}
+
+			}
+		}
+	}
+
+	return dp[len1-1][len2-1]
+}
+
+func min(i int, j int) int {
+	if i < j {
+		return i
+	} else {
+		return j
+	}
+}
+
+func simplifyPath(path string) string {
+	p := strings.Split(path, "/")
+	stack := make([]string, 0)
+	for _, v := range p {
+		if len(v) == 0 || v == "." {
+			continue
+		} else if v == ".." {
+			if len(stack) >= 1 {
+				stack = stack[:len(stack)-1]
+			}
+		} else {
+			stack = append(stack, v)
+		}
+	}
+
+	res := ""
+	for _, v := range stack {
+		res += "/"
+		res += v
+	}
+
+	if len(res) == 0 {
+		return "/"
+	}
+
+	return res
 }
 
 func isSameTree(p *TreeNode, q *TreeNode) bool {
