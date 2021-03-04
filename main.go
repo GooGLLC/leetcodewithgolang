@@ -28,22 +28,124 @@ func (s *Stack) Pop() int {
 func (s *Stack) Peek() int     { return (*s)[len(*s)-1] }
 func (s *Stack) IsEmpty() bool { return len(*s) == 0 }
 
+type TreeStack []*TreeNode
+
+func (s *TreeStack) Push(i *TreeNode) { *s = append(*s, i) }
+func (s *TreeStack) Pop() *TreeNode {
+	v := (*s)[len(*s)-1]
+	*s = (*s)[:len(*s)-1]
+	return v
+}
+func (s *TreeStack) Peek() *TreeNode { return (*s)[len(*s)-1] }
+func (s *TreeStack) IsEmpty() bool   { return len(*s) == 0 }
+
 func main() {
 	//input := []int{2,0,2,1,1,0}
 	res := largestRectangleArea([]int{4, 2, 0, 3, 2, 4, 3, 4})
 	fmt.Print(res)
 }
 
-func reverseList(head *ListNode) *ListNode {
-	res := &ListNode{}
-	p := head
-	for p != nil {
-		t := p.Next
-		p.Next = res.Next
-		res.Next = p
-		p = t
+func inorderTraversal(root *TreeNode) []int {
+	//res := make([]int, 0)
+	//dfs_inorderTraversal(root, &res)
+	//return res
+	stack := TreeStack{}
+	res := make([]int, 0)
+	for {
+		for root != nil {
+			stack.Push(root)
+			root = root.Left
+		}
+
+		if stack.IsEmpty() {
+			break
+		}
+
+		root = stack.Pop()
+		res = append(res, root.Val)
+		root = root.Right
 	}
-	return (*res).Next
+
+	return res
+}
+
+func dfs_inorderTraversal(root *TreeNode, i *[]int) {
+	if root == nil {
+		return
+	}
+	dfs_inorderTraversal(root.Left, i)
+	*i = append(*i, root.Val)
+	dfs_inorderTraversal(root.Right, i)
+}
+
+func preorderTraversal(root *TreeNode) []int {
+	//res := make([]int, 0)
+	//dfs_preorderTraversal(root, &res)
+	//return res
+	stack := TreeStack{}
+	res := make([]int, 0)
+	if root == nil {
+		return res
+	}
+
+	stack.Push(root)
+	for !stack.IsEmpty() {
+		root = stack.Pop()
+		res = append(res, root.Val)
+		if root.Right != nil {
+			stack.Push(root.Right)
+		}
+
+		if root.Left != nil {
+			stack.Push(root.Left)
+		}
+	}
+
+	return res
+}
+
+func dfs_preorderTraversal(root *TreeNode, i *[]int) {
+	if root == nil {
+		return
+	}
+	*i = append(*i, root.Val)
+	dfs_preorderTraversal(root.Left, i)
+	dfs_preorderTraversal(root.Right, i)
+}
+
+func postorderTraversal(root *TreeNode) []int {
+	res := make([]int, 0)
+	dfs_postorderTraversal(root, &res)
+	return res
+}
+
+func dfs_postorderTraversal(root *TreeNode, i *[]int) {
+	if root == nil {
+		return
+	}
+	dfs_postorderTraversal(root.Left, i)
+	dfs_postorderTraversal(root.Right, i)
+	*i = append(*i, root.Val)
+}
+
+func reverseList(head *ListNode) *ListNode {
+	//res := &ListNode{}
+	//p := head
+	//for p != nil {
+	//	t := p.Next
+	//	p.Next = res.Next
+	//	res.Next = p
+	//	p = t
+	//}
+	//return (*res).Next
+	if head == nil {
+		return head
+	}
+	p := head.Next
+	head.Next = nil
+	res := reverseList(p)
+	p.Next = head
+	return res
 }
 
 func partition(head *ListNode, x int) *ListNode {
