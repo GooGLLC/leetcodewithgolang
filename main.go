@@ -17,16 +17,112 @@ type TreeNode struct {
 	Right *TreeNode
 }
 
+type Stack []int
+
+func (s *Stack) Push(i int) { *s = append(*s, i) }
+func (s *Stack) Pop() int {
+	v := (*s)[len(*s)-1]
+	*s = (*s)[:len(*s)-1]
+	return v
+}
+func (s *Stack) Peek() int     { return (*s)[len(*s)-1] }
+func (s *Stack) IsEmpty() bool { return len(*s) == 0 }
+
 func main() {
 	//input := []int{2,0,2,1,1,0}
-	res := exist([][]byte{[]byte("a")}, "a")
+	res := largestRectangleArea([]int{4, 2, 0, 3, 2, 4, 3, 4})
 	fmt.Print(res)
 }
 
-//[["A","B","C","E"],
-//["S","F","E","S"],
-//["A","D","E","E"]]
-//"ABCESEEEFS"
+func reverseList(head *ListNode) *ListNode {
+	res := &ListNode{}
+	p := head
+	for p != nil {
+		t := p.Next
+		p.Next = res.Next
+		res.Next = p
+		p = t
+	}
+	return (*res).Next
+}
+
+func partition(head *ListNode, x int) *ListNode {
+	sHead := ListNode{}
+	lHead := ListNode{}
+	s := &sHead
+	p := &lHead
+	for head != nil {
+		v := head.Val
+		if v < x {
+			s.Next = head
+			s = s.Next
+		} else {
+			p.Next = head
+			p = p.Next
+		}
+		head = head.Next
+	}
+
+	p.Next = nil
+	s.Next = lHead.Next
+	return sHead.Next
+}
+
+func deleteDuplicates(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+
+	if head.Next.Val != head.Val {
+		head.Next = deleteDuplicates(head.Next)
+		return head
+	} else {
+		v := head.Val
+		for head != nil && head.Val == v {
+			head = head.Next
+		}
+
+		return deleteDuplicates(head)
+	}
+}
+
+func deleteDuplicates2(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+
+	if head.Val == head.Next.Val {
+		head.Next = head.Next.Next
+		return deleteDuplicates(head)
+	} else {
+		head.Next = deleteDuplicates(head.Next)
+		return head
+	}
+}
+
+func largestRectangleArea(heights []int) int {
+	stack := Stack{}
+	i := 0
+	best := 0
+	heights = append(heights, 0)
+	heights = append([]int{0}, heights...)
+	for i < len(heights) {
+		if stack.IsEmpty() || heights[stack.Peek()] <= heights[i] {
+			stack.Push(i)
+			i++
+		} else {
+			h := heights[stack.Pop()]
+			w := i - 1 - stack.Peek()
+			area := h * w
+			if area > best {
+				best = area
+			}
+		}
+	}
+
+	return best
+}
+
 func exist(board [][]byte, word string) bool {
 	h := len(board)
 	w := len(board[0])
