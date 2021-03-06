@@ -42,6 +42,7 @@ func (s *TreeStack) IsEmpty() bool   { return len(*s) == 0 }
 func main() {
 	//input := []int{2,0,2,1,1,0}
 	res := largestRectangleArea([]int{4, 2, 0, 3, 2, 4, 3, 4})
+	res += 1
 	fmt.Print(res)
 }
 
