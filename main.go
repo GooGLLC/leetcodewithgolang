@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -40,43 +41,223 @@ func (s *TreeStack) Peek() *TreeNode { return (*s)[len(*s)-1] }
 func (s *TreeStack) IsEmpty() bool   { return len(*s) == 0 }
 
 func main() {
-	//input := []int{2,0,2,1,1,0}
-	res := largestRectangleArea([]int{4, 2, 0, 3, 2, 4, 3, 4})
-	res += 1
-	fmt.Print(res)
+
+	fmt.Print("ff")
 }
 
-func inorderTraversal(root *TreeNode) []int {
-	//res := make([]int, 0)
-	//dfs_inorderTraversal(root, &res)
-	//return res
+func removeDuplicates(nums []int) int {
+	next := 0
+	i := 0
+	for i < len(nums) {
+		cur := nums[i]
+		j := i + 1
+		for j < len(nums) && nums[j] == cur {
+			j++
+		}
+		len := j - i
+		if len > 2 {
+			len = 2
+		}
+
+		for k := 0; k < len; k++ {
+			nums[next] = nums[i]
+			next++
+			i++
+		}
+
+		i = j
+	}
+	return next
+}
+
+var climbCache map[int]int
+
+func climbStairs(n int) int {
+	if climbCache == nil {
+		climbCache = make(map[int]int)
+	}
+	if v, ok := climbCache[n]; ok {
+		return v
+	}
+	if n <= 2 {
+		return n
+	} else {
+		res := climbStairs(n-1) + climbStairs(n-2)
+		climbCache[n] = res
+		return res
+	}
+}
+
+func restoreIpAddresses(s string) []string {
+	res := make([]string, 0)
+	if len(s) > 16 {
+		return res
+	}
+
+	restoreIpAddressesdfs(s, 0, &res, "")
+	return res
+}
+
+func restoreIpAddressesdfs(s string, parts int, res *[]string, cur string) {
+	if parts > 4 {
+		return
+	}
+	if len(s) == 0 {
+		if parts == 4 {
+			*res = append(*res, cur)
+		}
+
+		return
+	} else {
+		for i := 0; i < 3 && i < len(s); i++ {
+			firstBitString := s[0 : i+1]
+			if firstBitString[0] == '0' && len(firstBitString) > 1 {
+				break
+			}
+
+			v, err := strconv.Atoi(firstBitString)
+			if err != nil || v < 0 || v > 255 {
+				continue
+			}
+			nextCur := cur
+			nextCur += firstBitString
+			if parts != 3 {
+				nextCur += "."
+			}
+			restoreIpAddressesdfs(s[i+1:], parts+1, res, nextCur)
+
+		}
+	}
+}
+
+func subsetsWithDup(nums []int) [][]int {
+	res := make([][]int, 0)
+	cur := make([]int, 0)
+	visit := make([]bool, len(nums))
+	sort.Ints(nums)
+	subsetsWithDupDfs(nums, &res, &cur, 0, &visit)
+	return res
+}
+
+func subsetsWithDupDfs(nums []int, res *[][]int, cur *[]int, start int, visit *[]bool) {
+	if start == len(nums) {
+		tmp := make([]int, len(*cur))
+		copy(tmp, *cur)
+		*res = append(*res, tmp)
+	} else {
+		subsetsWithDupDfs(nums, res, cur, start+1, visit)
+		if start == 0 || nums[start] != nums[start-1] || (*visit)[start-1] {
+			(*visit)[start] = true
+			(*cur) = append(*cur, nums[start])
+			subsetsWithDupDfs(nums, res, cur, start+1, visit)
+			*cur = (*cur)[:len(*cur)-1]
+			(*visit)[start] = false
+		}
+	}
+}
+
+func maximalRectangle(matrix [][]byte) int {
+	h := len(matrix)
+	w := len(matrix[0])
+	height := make([][]int, h)
+	for i := 0; i < h; i++ {
+		height[i] = make([]int, w)
+	}
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if matrix[i][j] != '0' {
+				if i == 0 {
+					height[i][j] = 1
+				} else {
+					height[i][j] = 1 + height[i-1][j]
+				}
+			}
+		}
+	}
+
+	best := 0
+	for i := 0; i < h; i++ {
+		res := histgram(height, i)
+		if res > best {
+			best = res
+		}
+
+	}
+
+	return best
+}
+
+func histgram(height [][]int, base int) int {
+	stack := Stack{}
+
+	h := height[base]
+	h = append([]int{0}, h...)
+	h = append(h, 0)
+	best := 0
+	for i := 0; i < len(h); i++ {
+		if stack.IsEmpty() || h[stack.Peek()] <= h[i] {
+			stack.Push(i)
+		} else {
+			//stack.pop > current
+			l := stack.Pop()
+			w := i - stack.Peek() - 1
+			cur := h[l] * w
+			if cur > best {
+				best = cur
+			}
+			i--
+		}
+	}
+	return best
+}
+
+func recoverTree(root *TreeNode) {
 	stack := TreeStack{}
-	res := make([]int, 0)
-	for {
+	var prev *TreeNode
+	var next *TreeNode
+	var last *TreeNode
+	for root != nil || !stack.IsEmpty() {
 		for root != nil {
 			stack.Push(root)
 			root = root.Left
 		}
 
-		if stack.IsEmpty() {
-			break
+		root = stack.Pop()
+		if last != nil {
+			if last.Val > root.Val {
+				if prev == nil {
+					prev = last
+					next = root
+				} else {
+					next = root
+				}
+			}
 		}
 
-		root = stack.Pop()
-		res = append(res, root.Val)
+		last = root
 		root = root.Right
 	}
 
-	return res
+	t := next.Val
+	next.Val = prev.Val
+	prev.Val = t
 }
 
-func dfs_inorderTraversal(root *TreeNode, i *[]int) {
+func inorderTraversal(root *TreeNode) []int {
+	res := make([]int, 0)
+	dfs_inorderTraversal(root, &res)
+	return res
+
+}
+
+func dfs_inorderTraversal(root *TreeNode, res *[]int) {
 	if root == nil {
 		return
 	}
-	dfs_inorderTraversal(root.Left, i)
-	*i = append(*i, root.Val)
-	dfs_inorderTraversal(root.Right, i)
+	dfs_inorderTraversal(root.Left, res)
+	*res = append(*res, root.Val)
+	dfs_inorderTraversal(root.Right, res)
 }
 
 func preorderTraversal(root *TreeNode) []int {
