@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+// type Node struct {
+// 	Val   int
+// 	Left  *Node
+// 	Right *Node
+// 	Next  *Node
+// }
+
 type ListNode struct {
 	Val  int
 	Next *ListNode
@@ -49,8 +56,210 @@ func main() {
 	buildTree([]int{1, 2, 3}, []int{3, 2, 1})
 }
 
-func sortedListToBST(head *ListNode) *TreeNode {
+type Node struct {
+	Val       int
+	Neighbors []*Node
+}
 
+var cloneGraphMap map[*Node]*Node
+
+func cloneGraph(node *Node) *Node {
+	if cloneGraphMap == nil {
+		cloneGraphMap = make(map[*Node]*Node)
+	}
+	if v, ok := cloneGraphMap[node]; ok {
+		return v
+	} else {
+		cloneNode := &Node{Val: node.Val}
+		cloneGraphMap[node] = cloneNode
+
+		for _, v := range node.Neighbors {
+			cloneNode.Neighbors = append(cloneNode.Neighbors, cloneGraph(v))
+		}
+
+		return cloneNode
+	}
+}
+
+func connect(root *Node) *Node {
+	queue := make([]*Node, 0)
+	if root == nil {
+		return root
+	}
+
+	queue = append(queue, root)
+	for len(queue) != 0 {
+		qsize := len(queue)
+		last := &Node{}
+		for i := 0; i < qsize; i++ {
+			cur := queue[0]
+			queue = queue[1:]
+			if cur.Left != nil {
+				queue = append(queue, cur.Left)
+			}
+			if cur.Right != nil {
+				queue = append(queue, cur.Right)
+			}
+
+			last.Next = cur
+			last = cur
+		}
+	}
+
+	return root
+}
+
+func flatten(root *TreeNode) {
+	flattenHelper(root)
+}
+
+func flattenHelper(root *TreeNode) (*TreeNode, *TreeNode) {
+	if root == nil {
+		return nil, nil
+	} else {
+		leftHead, leftTail := flattenHelper(root.Left)
+		rightHead, rightTail := flattenHelper(root.Right)
+		root.Left = nil
+		root.Right = nil
+
+		if leftHead != nil {
+			root.Right = leftHead
+		} else {
+			root.Right = rightHead
+		}
+
+		if leftTail != nil {
+			leftTail.Right = rightHead
+		}
+
+		r2 := root
+		if rightTail != nil {
+			r2 = rightTail
+		} else if leftTail != nil {
+			r2 = leftTail
+		}
+
+		return root, r2
+	}
+}
+
+func pathSum(root *TreeNode, targetSum int) [][]int {
+	res := make([][]int, 0)
+	cur := make([]int, 0)
+	pathSumDfs(root, targetSum, &res, &cur)
+	return res
+}
+
+func pathSumDfs(root *TreeNode, targetSum int, res *[][]int, cur *[]int) {
+	if root == nil {
+		return
+	}
+
+	*cur = append(*cur, root.Val)
+	if root.Left == nil && root.Right == nil {
+		if targetSum == root.Val {
+			tmp := make([]int, len(*cur))
+			copy(tmp, *cur)
+			*res = append(*res, tmp)
+		}
+	} else {
+		pathSumDfs(root.Left, targetSum-root.Val, res, cur)
+		pathSumDfs(root.Right, targetSum-root.Val, res, cur)
+	}
+
+	*cur = (*cur)[:len(*cur)-1]
+}
+
+func hasPathSum(root *TreeNode, targetSum int) bool {
+	if root == nil {
+		return false
+	} else if root.Left == nil && root.Right == nil {
+		return targetSum == root.Val
+	} else {
+		return hasPathSum(root.Left, targetSum-root.Val) || hasPathSum(root.Right, targetSum-root.Val)
+	}
+}
+
+func minDepth(root *TreeNode) int {
+	if root == nil {
+		return 0
+	} else if root.Left == nil && root.Right == nil {
+		return 1
+	} else {
+		leftDepth := minDepth(root.Left)
+		rightDepth := minDepth(root.Right)
+
+		if leftDepth == 0 {
+			return rightDepth + 1
+		} else if rightDepth == 0 {
+			return leftDepth + 1
+		} else {
+			if leftDepth < rightDepth {
+				return leftDepth + 1
+			} else {
+				return rightDepth + 1
+			}
+		}
+	}
+}
+
+func isBalanced(root *TreeNode) bool {
+	ok, _ := isBalancedHelper(root)
+	return ok
+}
+
+func isBalancedHelper(root *TreeNode) (bool, int) {
+	if root == nil {
+		return true, 0
+	} else {
+		leftok, leftdepth := isBalancedHelper(root.Left)
+		rightok, rightdepth := isBalancedHelper(root.Right)
+		if !leftok || !rightok {
+			return false, 0
+		} else {
+			if leftdepth > rightdepth {
+				return leftdepth <= rightdepth+1, 1 + leftdepth
+			} else {
+				return rightdepth <= leftdepth+1, 1 + rightdepth
+			}
+		}
+	}
+}
+
+func sortedListToBST(head *ListNode) *TreeNode {
+	len := findListLengthHelper(head)
+	res, _ := sortedListToBSTHelper(head, len)
+	return res
+}
+
+func sortedListToBSTHelper(head *ListNode, len int) (*TreeNode, *ListNode) {
+	if len == 0 {
+		return nil, nil
+	} else if len == 1 {
+		return &TreeNode{Val: head.Val}, head
+	} else {
+		left, tail := sortedListToBSTHelper(head, len/2)
+		root := &TreeNode{Val: tail.Next.Val}
+		root.Left = left
+		var trytailnext *ListNode
+		if tail.Next != nil {
+			trytailnext = tail.Next.Next
+		}
+		right, rtail := sortedListToBSTHelper(trytailnext, len-len/2-1)
+		root.Right = right
+		if rtail != nil {
+			return root, rtail
+		} else {
+			return root, tail.Next
+		}
+	}
+}
+
+func findListLengthHelper(head *ListNode) int {
+	if head == nil {
+		return 0
+	}
+	return 1 + findListLengthHelper(head.Next)
 }
 
 func sortedArrayToBST(nums []int) *TreeNode {
