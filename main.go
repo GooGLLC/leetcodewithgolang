@@ -26,6 +26,7 @@ func (s *Stack) Pop() int {
 	*s = (*s)[:len(*s)-1]
 	return v
 }
+
 func (s *Stack) Peek() int     { return (*s)[len(*s)-1] }
 func (s *Stack) IsEmpty() bool { return len(*s) == 0 }
 
@@ -41,8 +42,171 @@ func (s *TreeStack) Peek() *TreeNode { return (*s)[len(*s)-1] }
 func (s *TreeStack) IsEmpty() bool   { return len(*s) == 0 }
 
 func main() {
+	//removeDuplicates([]int{1, 2, 2, 3})
+	//dfs("test")
 
-	fmt.Print("ff")
+	//fmt.Print(x)
+	buildTree([]int{1, 2, 3}, []int{3, 2, 1})
+}
+
+func sortedListToBST(head *ListNode) *TreeNode {
+
+}
+
+func sortedArrayToBST(nums []int) *TreeNode {
+	return sortedArrayToBSTHelper(nums, 0, len(nums)-1)
+}
+
+func sortedArrayToBSTHelper(nums []int, start int, end int) *TreeNode {
+	if start > end {
+		return nil
+	} else {
+		mid := start + (end-start)/2
+		root := &TreeNode{Val: nums[mid]}
+		root.Left = sortedArrayToBSTHelper(nums, start, mid-1)
+		root.Right = sortedArrayToBSTHelper(nums, mid+1, end)
+		return root
+	}
+}
+
+func buildTree(inorder []int, postorder []int) *TreeNode {
+	inorderValueToIndex := make(map[int]int)
+	for k, v := range inorder {
+		inorderValueToIndex[v] = k
+	}
+
+	return buildTreeWithPostInOrder(postorder, len(postorder)-1, len(postorder), inorder, 0, len(inorder), inorderValueToIndex)
+}
+
+func buildTreeWithPostInOrder(postorder []int, pend int, plen int, inorder []int, istart int, ilen int, inorderValueToIndex map[int]int) *TreeNode {
+	if plen <= 0 {
+		return nil
+	} else {
+		rootValue := postorder[pend]
+		root := &TreeNode{Val: rootValue}
+		rootIndexInOrder := inorderValueToIndex[rootValue]
+		leftLen := rootIndexInOrder - istart
+		rightLen := ilen - 1 - leftLen
+		root.Right = buildTreeWithPostInOrder(postorder, pend-1, rightLen, inorder, rootIndexInOrder+1, rightLen, inorderValueToIndex)
+		root.Left = buildTreeWithPostInOrder(postorder, pend-1-rightLen, leftLen, inorder, istart, leftLen, inorderValueToIndex)
+		return root
+	}
+}
+
+func buildTreePreInd(preorder []int, inorder []int) *TreeNode {
+	inorderValueToIndex := make(map[int]int)
+	for k, v := range inorder {
+		inorderValueToIndex[v] = k
+	}
+
+	return buildTreeWithPreInOrder(preorder, 0, len(preorder), inorder, 0, len(inorder), inorderValueToIndex)
+}
+
+func buildTreeWithPreInOrder(preorder []int, pstart int, plen int, inorder []int, istart int, ilen int, inorderValueToIndex map[int]int) *TreeNode {
+	if plen <= 0 {
+		return nil
+	} else if plen == 1 {
+		return &TreeNode{Val: preorder[pstart]}
+	} else {
+		rootValue := preorder[pstart]
+		rootIndexInOrder := inorderValueToIndex[rootValue]
+		leftLen := rootIndexInOrder - istart
+		rightLen := ilen - 1 - leftLen
+		root := &TreeNode{Val: rootValue}
+		root.Left = buildTreeWithPreInOrder(preorder, pstart+1, leftLen, inorder, istart, leftLen, inorderValueToIndex)
+		root.Right = buildTreeWithPreInOrder(preorder, pstart+1+leftLen, rightLen, inorder, rootIndexInOrder+1, rightLen, inorderValueToIndex)
+		return root
+	}
+}
+
+func levelOrderBottom(root *TreeNode) [][]int {
+	res := make([][]int, 0)
+	queue := make([]*TreeNode, 0)
+	if root == nil {
+		return res
+	} else {
+		queue = append(queue, root)
+	}
+
+	for len(queue) > 0 {
+		len := len(queue)
+		cur := make([]int, 0)
+		for i := 0; i < len; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+
+			cur = append(cur, node.Val)
+		}
+
+		res = append([][]int{cur}, res...)
+	}
+
+	return res
+}
+
+func maxDepth(root *TreeNode) int {
+	if root == nil {
+		return 0
+	} else if root.Left == nil && root.Right == nil {
+		return 1
+	} else {
+		maxD := 1
+		if root.Left != nil {
+			maxD = 1 + maxDepth(root.Left)
+		}
+
+		if root.Right != nil {
+			d := 1 + maxDepth(root.Right)
+			if d > maxD {
+				maxD = d
+			}
+		}
+
+		return maxD
+	}
+}
+
+func zigzagLevelOrder(root *TreeNode) [][]int {
+	res := make([][]int, 0)
+	queue := make([]*TreeNode, 0)
+	if root == nil {
+		return res
+	} else {
+		queue = append(queue, root)
+	}
+
+	flip := false
+	for len(queue) > 0 {
+		len := len(queue)
+		cur := make([]int, 0)
+		for i := 0; i < len; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+
+			if !flip {
+				cur = append(cur, node.Val)
+			} else {
+				cur = append([]int{node.Val}, cur...)
+			}
+		}
+
+		flip = !flip
+		res = append(res, cur)
+	}
+
+	return res
 }
 
 func removeDuplicates(nums []int) int {
@@ -968,7 +1132,7 @@ func countEcode(s string) string {
 
 	r := ""
 	for i := 0; i < 26; i++ {
-		r += fmt.Sprintf("%s%d", string('a'+i), res[i])
+		r += fmt.Sprintf("%s%d", string(rune('a'+i)), res[i])
 	}
 	return r
 }
@@ -1195,7 +1359,7 @@ func countAndSay(n int) string {
 		res := ""
 		base := countAndSay(n - 1)
 		lastBeginning := 0
-		for pos, _ := range base {
+		for pos := range base {
 			if base[lastBeginning] == base[pos] {
 				continue
 			}
