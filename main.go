@@ -51,9 +51,312 @@ func (s *TreeStack) IsEmpty() bool   { return len(*s) == 0 }
 func main() {
 	//removeDuplicates([]int{1, 2, 2, 3})
 	//dfs("test")
-
 	//fmt.Print(x)
-	buildTree([]int{1, 2, 3}, []int{3, 2, 1})
+	res := findLadders("hit", "cog", []string{"hot", "dot", "dog", "lot", "log", "cog"})
+	fmt.Print(res)
+}
+
+func maxProfit1(prices []int) int {
+	min := prices[0]
+	best := 0
+	for _, v := range prices {
+		if min > v {
+			min = v
+		}
+
+		diff := v - min
+		if diff > best {
+			best = diff
+		}
+	}
+
+	return best
+}
+
+func maxProfit2(prices []int) int {
+	best := 0
+	for i := 1; i < len(prices); i++ {
+		best += max(0, prices[i]-prices[i-1])
+	}
+	return best
+}
+
+func max(i int, j int) int {
+	if i > j {
+		return i
+	} else {
+		return j
+	}
+}
+
+// pathSum can be any path rather than root to leaf
+func maxPathSum(root *TreeNode) int {
+	leftEndSum := make(map[*TreeNode]int)
+	rightEndSum := make(map[*TreeNode]int)
+	maxEndSum(root, leftEndSum, rightEndSum)
+	best := root.Val
+	for k := range leftEndSum {
+		leftVal := 0
+		if k.Left != nil && max(leftEndSum[k.Left], rightEndSum[k.Left]) > leftVal {
+			leftVal = max(leftEndSum[k.Left], rightEndSum[k.Left])
+		}
+		rightVal := 0
+		if k.Right != nil && max(rightEndSum[k.Right], leftEndSum[k.Right]) > rightVal {
+			rightVal = max(rightEndSum[k.Right], leftEndSum[k.Right])
+		}
+		if rightVal+leftVal+k.Val > best {
+			best = rightVal + leftVal + k.Val
+		}
+
+	}
+	return best
+}
+
+func maxEndSum(root *TreeNode, leftEndSum map[*TreeNode]int, rightEndSum map[*TreeNode]int) int {
+	if root == nil {
+		return 0
+	}
+
+	leftEndSum[root] = root.Val
+	rightEndSum[root] = root.Val
+
+	if root.Left != nil {
+		if leftSum := maxEndSum(root.Left, leftEndSum, rightEndSum); leftSum > 0 {
+			leftEndSum[root] = leftSum + root.Val
+		}
+	}
+
+	if root.Right != nil {
+		if rightSum := maxEndSum(root.Right, leftEndSum, rightEndSum); rightSum > 0 {
+			rightEndSum[root] = rightSum + root.Val
+		}
+	}
+
+	fmt.Printf("%d-%d-%d,", root.Val, leftEndSum[root], rightEndSum[root])
+	return max(leftEndSum[root], rightEndSum[root])
+}
+
+func ladderLength(beginWord string, endWord string, wordList []string) int {
+	dict := make(map[string]bool)
+	for _, v := range wordList {
+		dict[v] = true
+	}
+
+	if beginWord == endWord {
+		return 1
+	}
+
+	if !dict[endWord] {
+		return 0
+	}
+
+	queue := make([]string, 0)
+	queue = append(queue, beginWord)
+	size := 1
+	used := make(map[string]bool)
+	used[beginWord] = true
+	for len(queue) > 0 {
+		qsize := len(queue)
+		for i := 0; i < qsize; i++ {
+			cur := queue[0]
+			queue = queue[1:]
+			neighbor := findNb(cur, dict)
+			for _, v := range neighbor {
+				if used[v] {
+					continue
+				}
+
+				if v == endWord {
+					return size + 1
+				}
+				used[v] = true
+				queue = append(queue, v)
+			}
+		}
+
+		size++
+	}
+
+	return 0
+}
+
+func findLadders(beginWord string, endWord string, wordList []string) [][]string {
+	dict := make(map[string]bool)
+	for _, v := range wordList {
+		dict[v] = true
+	}
+
+	if beginWord == endWord {
+		return [][]string{[]string{beginWord}}
+	}
+
+	if !dict[endWord] {
+		return [][]string{}
+	}
+
+	prev := make(map[string][]string)
+	prevLen := make(map[string]int) // len from current node to beginWord
+	for _, v := range wordList {
+		prevLen[v] = len(wordList) + 10
+	}
+	prevLen[beginWord] = 0
+	queue := make([]string, 0)
+	queue = append(queue, beginWord)
+	size := 1
+	for len(queue) > 0 {
+		if prev[endWord] != nil {
+			break
+		}
+		qsize := len(queue)
+		for i := 0; i < qsize; i++ {
+			cur := queue[0]
+			queue = queue[1:]
+			neighbor := findNb(cur, dict)
+			for _, v := range neighbor {
+				if prevLen[v] == size {
+					prev[v] = append(prev[v], cur)
+				} else if size < prevLen[v] {
+					prevLen[v] = size
+					prev[v] = []string{cur}
+					queue = append(queue, v)
+				}
+			}
+		}
+
+		size++
+	}
+
+	if prev[endWord] == nil {
+		return make([][]string, 0)
+	}
+
+	return findPath(beginWord, endWord, prev)
+}
+
+func findPath(bw string, ew string, prev map[string][]string) [][]string {
+	res := make([][]string, 0)
+	cur := []string{ew}
+	findPathdfs(bw, ew, prev, &res, &cur)
+	return res
+}
+
+func findPathdfs(bw string, ew string, prev map[string][]string, res *[][]string, cur *[]string) {
+	if bw == ew {
+		tmp := make([]string, len(*cur))
+		copy(tmp, *cur)
+		*res = append(*res, tmp)
+	} else {
+		prevList := prev[ew]
+		for _, v := range prevList {
+			*cur = append([]string{v}, (*cur)...)
+			findPathdfs(bw, v, prev, res, cur)
+			*cur = (*cur)[1:]
+		}
+	}
+}
+
+func findNb(cur string, dict map[string]bool) []string {
+	res := make([]string, 0)
+	for k, _ := range dict {
+		if wordDiff(cur, k) {
+			res = append(res, k)
+		}
+	}
+	return res
+}
+
+func wordDiff(cur string, next string) bool {
+	diff := false
+	for i := 0; i < len(cur); i++ {
+		if cur[i] != next[i] {
+			if diff {
+				return false
+			} else {
+				diff = true
+			}
+		}
+	}
+
+	return diff == true
+}
+
+func numDistinct(s string, t string) int {
+	slen := len(s)
+	tlen := len(t)
+	dp := make([][]int, slen+1)
+	for i := 0; i <= slen; i++ {
+		dp[i] = make([]int, tlen+1)
+	}
+
+	for i := 0; i <= slen; i++ {
+		for j := 0; j <= tlen; j++ {
+			if j == 0 {
+				dp[i][j] = 1
+			} else if i == 0 {
+				dp[i][j] = 0
+			} else {
+				dp[i][j] = dp[i-1][j]
+				if s[i-1] == t[j-1] {
+					dp[i][j] += dp[i-1][j-1]
+				}
+			}
+		}
+	}
+
+	return dp[slen][tlen]
+}
+
+func min(i int, j int) int {
+	if i < j {
+		return i
+	} else {
+		return j
+	}
+}
+
+func minimumTotal(triangle [][]int) int {
+	level := len(triangle)
+	dp := make([][]int, level)
+	for i := level - 1; i >= 0; i-- {
+		dp[i] = make([]int, i+1)
+		for j := 0; j <= i; j++ {
+			if i == level-1 {
+				dp[i][j] = triangle[i][j]
+			} else {
+				dp[i][j] = triangle[i][j] + dp[i+1][j]
+				if j+1 <= i+1 {
+					dp[i][j] = min(dp[i][j], triangle[i][j]+dp[i+1][j+1])
+				}
+			}
+		}
+	}
+	return dp[0][0]
+}
+
+func generate(numRows int) [][]int {
+	res := make([][]int, 0)
+	if numRows >= 1 {
+		res = append(res, []int{1})
+	}
+	if numRows >= 2 {
+		res = append(res, []int{1, 1})
+	}
+
+	for i := 3; i <= numRows; i++ {
+		lastRow := res[i-2]
+		curRow := make([]int, len(lastRow)+1)
+		for j := 0; j <= len(lastRow); j++ {
+			if j == 0 || j == len(lastRow) {
+				curRow[j] = 1
+			} else {
+				curRow[j] = lastRow[j-1] + lastRow[j]
+			}
+		}
+
+		res = append(res, curRow)
+	}
+
+	return res
 }
 
 type Node struct {
@@ -81,33 +384,33 @@ func cloneGraph(node *Node) *Node {
 	}
 }
 
-func connect(root *Node) *Node {
-	queue := make([]*Node, 0)
-	if root == nil {
-		return root
-	}
-
-	queue = append(queue, root)
-	for len(queue) != 0 {
-		qsize := len(queue)
-		last := &Node{}
-		for i := 0; i < qsize; i++ {
-			cur := queue[0]
-			queue = queue[1:]
-			if cur.Left != nil {
-				queue = append(queue, cur.Left)
-			}
-			if cur.Right != nil {
-				queue = append(queue, cur.Right)
-			}
-
-			last.Next = cur
-			last = cur
-		}
-	}
-
-	return root
-}
+//func connect(root *Node) *Node {
+//	queue := make([]*Node, 0)
+//	if root == nil {
+//		return root
+//	}
+//
+//	queue = append(queue, root)
+//	for len(queue) != 0 {
+//		qsize := len(queue)
+//		last := &Node{}
+//		for i := 0; i < qsize; i++ {
+//			cur := queue[0]
+//			queue = queue[1:]
+//			if cur.Left != nil {
+//				queue = append(queue, cur.Left)
+//			}
+//			if cur.Right != nil {
+//				queue = append(queue, cur.Right)
+//			}
+//
+//			last.Next = cur
+//			last = cur
+//		}
+//	}
+//
+//	return root
+//}
 
 func flatten(root *TreeNode) {
 	flattenHelper(root)
@@ -1020,14 +1323,6 @@ func setZeroes(matrix [][]int) {
 	}
 }
 
-func max(i int, j int) int {
-	if i > j {
-		return i
-	} else {
-		return j
-	}
-}
-
 func minDistance(word1 string, word2 string) int {
 	len1 := len(word1) + 1
 	len2 := len(word2) + 1
@@ -1055,14 +1350,6 @@ func minDistance(word1 string, word2 string) int {
 	}
 
 	return dp[len1-1][len2-1]
-}
-
-func min(i int, j int) int {
-	if i < j {
-		return i
-	} else {
-		return j
-	}
 }
 
 func simplifyPath(path string) string {
