@@ -52,8 +52,265 @@ func main() {
 	//removeDuplicates([]int{1, 2, 2, 3})
 	//dfs("test")
 	//fmt.Print(x)
-	res := findLadders("hit", "cog", []string{"hot", "dot", "dog", "lot", "log", "cog"})
+	res := longestConsecutive([]int{100, 4, 200, 1, 3, 2})
 	fmt.Print(res)
+}
+
+func longestConsecutive(nums []int) int {
+	leftMap := make(map[int][]int)
+	rightMap := make(map[int][]int)
+	best := 0
+	for _, v := range nums {
+		wantRightValue := v + 1
+		if leftMap[wantRightValue] == nil {
+			leftMap[v] = []int{v, v}
+		} else {
+			interval := leftMap[wantRightValue]
+			leftMap[v] = []int{v, interval[1]}
+		}
+
+		wantLeftValue := v - 1
+		if rightMap[wantLeftValue] == nil {
+			rightMap[v] = []int{v, v}
+		} else {
+			interval := rightMap[wantLeftValue]
+			rightMap[v] = []int{interval[0], v}
+		}
+	}
+
+	for _, v := range nums {
+		leftInterval := leftMap[v]
+		rightInterval := rightMap[v]
+		len := leftInterval[1] - rightInterval[0]
+		if len > best {
+			best = len
+		}
+	}
+
+	return best
+}
+
+func minCut(s string) int {
+	slen := len(s)
+	dp := make([][]bool, slen)
+	for i := 0; i < slen; i++ {
+		dp[i] = make([]bool, slen)
+	}
+
+	for i := slen - 1; i >= 0; i-- {
+		for j := i; j < slen; j++ {
+			if i == j {
+				dp[i][j] = true
+			} else if i+1 == j {
+				dp[i][j] = (s[i] == s[j])
+			} else {
+				dp[i][j] = (s[i] == s[j]) && dp[i+1][j-1]
+			}
+		}
+	}
+	visit := make(map[int]bool)
+	step := 0
+	queue := make([]int, 0)
+	queue = append(queue, 0)
+	for len(queue) > 0 {
+		qsize := len(queue)
+		for j := 0; j < qsize; j++ {
+			cur := queue[0]
+			queue = queue[1:]
+			if cur == len(s) {
+				return step - 1
+			}
+			for next := cur; next < len(s); next++ {
+				if dp[cur][next] && !visit[next+1] {
+					visit[next+1] = true
+					queue = append(queue, next+1)
+				}
+			}
+		}
+		step++
+	}
+
+	return step - 1
+}
+
+func partition(s string) [][]string {
+	res := make([][]string, 0)
+	len := len(s)
+	dp := make([][]bool, len)
+	for i := 0; i < len; i++ {
+		dp[i] = make([]bool, len)
+	}
+
+	for i := len - 1; i >= 0; i-- {
+		for j := i; j < len; j++ {
+			if i == j {
+				dp[i][j] = true
+			} else if i+1 == j {
+				dp[i][j] = (s[i] == s[j])
+			} else {
+				dp[i][j] = (s[i] == s[j]) && dp[i+1][j-1]
+			}
+		}
+	}
+
+	cur := make([]string, 0)
+	partitionDFS(&res, &cur, s, dp, 0)
+	return res
+}
+
+func partitionDFS(res *[][]string, cur *[]string, s string, dp [][]bool, start int) {
+	if start == len(s) {
+		tmp := make([]string, len(*cur))
+		copy(tmp, *cur)
+		*res = append(*res, tmp)
+	} else {
+		for i := start; i < len(s); i++ {
+			if dp[start][i] {
+				*cur = append(*cur, s[start:i+1])
+				partitionDFS(res, cur, s, dp, i+1)
+				*cur = (*cur)[:len(*cur)-1]
+			}
+		}
+	}
+}
+func solve(board [][]byte) {
+	h := len(board)
+	w := len(board[0])
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if i == 0 || j == 0 {
+				solveSurDFS(board, i, j)
+			}
+		}
+	}
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if board[i][j] == 'O' {
+				board[i][j] = 'X'
+			}
+		}
+	}
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if board[i][j] == 'V' {
+				board[i][j] = 'O'
+			}
+		}
+	}
+}
+
+func solveSurDFS(board [][]byte, i int, j int) {
+	dxy := [][]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+	h := len(board)
+	w := len(board[0])
+	if i < 0 || i >= h || j < 0 || j >= w || board[i][j] != 'O' {
+		return
+	} else {
+		board[i][j] = 'V'
+		for _, v := range dxy {
+			newI := i + v[0]
+			newJ := j + v[1]
+			solveSurDFS(board, newI, newJ)
+		}
+	}
+}
+
+func sumNumbers(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+
+	sum := 0
+	sumNumbersHelper(root, &sum, 0)
+	return sum
+}
+
+func sumNumbersHelper(root *TreeNode, sum *int, pathSum int) {
+	pathSum = pathSum*10 + root.Val
+	if root.Left == nil && root.Right == nil {
+		*sum = *sum + pathSum
+	} else {
+		if root.Left != nil {
+			sumNumbersHelper(root.Left, sum, pathSum)
+		}
+
+		if root.Right != nil {
+			sumNumbersHelper(root.Right, sum, pathSum)
+		}
+	}
+}
+
+func maxProfit4(k int, prices []int) int {
+
+	len := len(prices) + 1
+	if k > len/2 {
+		return maxProfit2(prices)
+	}
+	buyState := make([][]int, len)
+	sellState := make([][]int, len)
+	for i := 0; i < len; i++ {
+		buyState[i] = make([]int, k+1)
+		sellState[i] = make([]int, k+1)
+	}
+
+	for j := 1; j <= k; j++ {
+		buyState[0][j] = -10 ^ 6
+	}
+
+	buyState[0][0] = -prices[0]
+	best := 0
+	for i := 1; i < len; i++ {
+		for j := 1; j <= k; j++ {
+			buyState[i][j] = max(buyState[i-1][j], sellState[i-1][j-1]-prices[i-1])
+			sellState[i][j] = max(sellState[i-1][j], buyState[i-1][j]+prices[i-1])
+			best = max(best, buyState[i][j])
+			best = max(best, sellState[i][j])
+		}
+	}
+	return best
+}
+
+func maxProfit3(prices []int) int {
+	len := len(prices)
+	dp := make([]int, len)
+	minValue := prices[0]
+	max := 0
+	for i := 1; i < len; i++ {
+		if minValue > prices[i] {
+			minValue = prices[i]
+		}
+
+		dp[i] = prices[i] - minValue
+		if dp[i] < dp[i-1] {
+			dp[i] = dp[i-1]
+		}
+		if max < dp[i] {
+			max = dp[i]
+		}
+	}
+
+	// the max value to the right of this index, including this index
+	rightMaxValue := make([]int, len)
+	for i := len - 1; i >= 0; i-- {
+		if i == len-1 {
+			rightMaxValue[i] = prices[i]
+		} else {
+			rightMaxValue[i] = rightMaxValue[i+1]
+			if rightMaxValue[i] < prices[i] {
+				rightMaxValue[i] = prices[i]
+			}
+		}
+	}
+
+	for i := 1; i < len; i++ {
+		cur := dp[i-1] + (rightMaxValue[i] - prices[i])
+		if cur > max {
+			max = cur
+		}
+	}
+	return max
 }
 
 func maxProfit1(prices []int) int {
@@ -1006,7 +1263,7 @@ func reverseList(head *ListNode) *ListNode {
 	return res
 }
 
-func partition(head *ListNode, x int) *ListNode {
+func partition2(head *ListNode, x int) *ListNode {
 	sHead := ListNode{}
 	lHead := ListNode{}
 	s := &sHead
