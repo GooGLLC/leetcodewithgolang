@@ -56,37 +56,178 @@ func main() {
 	fmt.Print(res)
 }
 
+func detectCycle(head *ListNode) *ListNode {
+	if head == nil {
+		return nil
+	}
+
+	p := head
+	q := head
+	for true {
+		if p.Next != nil {
+			p = p.Next
+		} else {
+			break
+		}
+
+		if q.Next != nil && q.Next.Next != nil {
+			q = q.Next.Next
+		} else {
+			break
+		}
+
+		if p == q {
+			break
+		}
+	}
+
+	if p != q {
+		return nil
+	}
+
+	p = head
+	for p != q {
+		p = p.Next
+		q = q.Next
+	}
+
+	return p
+}
+
+func hasCycle(head *ListNode) bool {
+	if head == nil {
+		return false
+	}
+
+	p := head
+	q := head
+	for true {
+		if p.Next != nil {
+			p = p.Next
+		} else {
+			break
+		}
+
+		if q.Next != nil && q.Next.Next != nil {
+			q = q.Next.Next
+		} else {
+			break
+		}
+
+		if p == q {
+			return true
+		}
+	}
+
+	return false
+}
+
+func candy(ratings []int) int {
+	len := len(ratings)
+	res := make([]int, len)
+	for i := 0; i < len; i++ {
+		res[i] = 1
+	}
+	for i := 1; i < len; i++ {
+		if ratings[i] > ratings[i-1] {
+			res[i] = res[i-1] + 1
+		}
+	}
+
+	for i := len - 2; i >= 0; i-- {
+		if ratings[i] > ratings[i+1] && res[i] <= res[i+1] {
+			res[i] = res[i+1] + 1
+		}
+	}
+
+	sum := 0
+	for i := 0; i < len; i++ {
+		sum += res[i]
+	}
+	return sum
+}
+
+func canCompleteCircuit(gas []int, cost []int) int {
+	len := len(gas)
+	minIndex := 0
+	dp := make([]int, len)
+
+	for i := 0; i < len; i++ {
+		gas[i] -= cost[i]
+		if i == 0 {
+			dp[i] = gas[i]
+		} else {
+			dp[i] = dp[i-1] + gas[i]
+		}
+		if dp[minIndex] > dp[i] {
+			minIndex = i
+		}
+	}
+
+	cur := 0
+	step := 0
+	i := minIndex + 1
+	for step < len {
+		i = i % len
+		cur += gas[i]
+		if cur < 0 {
+			return -1
+		}
+		step++
+		i++
+		i = i % len
+	}
+
+	return (minIndex + 1) % len
+}
+
 func longestConsecutive(nums []int) int {
-	leftMap := make(map[int][]int)
-	rightMap := make(map[int][]int)
+	leftBoundaryToIntervalMap := make(map[int][]int)
+	rightBoundaryToIntervalMap := make(map[int][]int)
+	visit := make(map[int]bool)
+	for _, v := range nums {
+		if _, ok := visit[v]; ok {
+			continue
+		} else {
+			visit[v] = true
+		}
+
+		useAsLeftBoundary := v + 1
+		lb, okleft := leftBoundaryToIntervalMap[useAsLeftBoundary]
+		if okleft {
+			leftBoundaryToIntervalMap[v] = []int{v, lb[1]}
+		} else {
+			leftBoundaryToIntervalMap[v] = []int{v, v}
+		}
+
+		useAsRightBoundary := v - 1
+		rb, okright := rightBoundaryToIntervalMap[useAsRightBoundary]
+		if okright {
+			rightBoundaryToIntervalMap[v] = []int{rb[0], v}
+		} else {
+			rightBoundaryToIntervalMap[v] = []int{v, v}
+		}
+
+		// also consider to merge two intervals
+		linterval, _ := rightBoundaryToIntervalMap[v]
+		rinterval, _ := leftBoundaryToIntervalMap[v]
+		newInterval := []int{linterval[0], rinterval[1]}
+		if v, _ := leftBoundaryToIntervalMap[newInterval[0]]; v[1] < newInterval[1] {
+			leftBoundaryToIntervalMap[newInterval[0]] = newInterval
+		}
+
+		if v, _ := rightBoundaryToIntervalMap[newInterval[1]]; v[0] > newInterval[0] {
+			rightBoundaryToIntervalMap[newInterval[1]] = newInterval
+		}
+	}
+
 	best := 0
-	for _, v := range nums {
-		wantRightValue := v + 1
-		if leftMap[wantRightValue] == nil {
-			leftMap[v] = []int{v, v}
-		} else {
-			interval := leftMap[wantRightValue]
-			leftMap[v] = []int{v, interval[1]}
-		}
-
-		wantLeftValue := v - 1
-		if rightMap[wantLeftValue] == nil {
-			rightMap[v] = []int{v, v}
-		} else {
-			interval := rightMap[wantLeftValue]
-			rightMap[v] = []int{interval[0], v}
+	for _, v := range leftBoundaryToIntervalMap {
+		cur := v[1] - v[0] + 1
+		if cur > best {
+			best = cur
 		}
 	}
-
-	for _, v := range nums {
-		leftInterval := leftMap[v]
-		rightInterval := rightMap[v]
-		len := leftInterval[1] - rightInterval[0]
-		if len > best {
-			best = len
-		}
-	}
-
 	return best
 }
 
