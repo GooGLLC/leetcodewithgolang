@@ -7,12 +7,42 @@ import (
 	"strings"
 )
 
-// type Node struct {
-// 	Val   int
-// 	Left  *Node
-// 	Right *Node
-// 	Next  *Node
-// }
+type MinStack struct {
+	stack    []int
+	minStack []int
+}
+
+/** initialize your data structure here. */
+func Constructor() MinStack {
+	s := MinStack{
+		stack:    make([]int, 0),
+		minStack: make([]int, 0),
+	}
+	return s
+}
+
+func (this *MinStack) Push(val int) {
+	this.stack = append([]int{val}, this.stack...)
+	if len(this.minStack) == 0 || val <= this.GetMin() {
+		this.minStack = append([]int{val}, this.minStack...)
+	}
+}
+
+func (this *MinStack) Pop() {
+	top := this.stack[0]
+	this.stack = this.stack[1:]
+	if top == this.GetMin() {
+		this.minStack = this.minStack[1:]
+	}
+}
+
+func (this *MinStack) Top() int {
+	return this.stack[0]
+}
+
+func (this *MinStack) GetMin() int {
+	return this.minStack[0]
+}
 
 type ListNode struct {
 	Val  int
@@ -49,11 +79,172 @@ func (s *TreeStack) Peek() *TreeNode { return (*s)[len(*s)-1] }
 func (s *TreeStack) IsEmpty() bool   { return len(*s) == 0 }
 
 func main() {
-	//removeDuplicates([]int{1, 2, 2, 3})
-	//dfs("test")
-	//fmt.Print(x)
-	res := longestConsecutive([]int{100, 4, 200, 1, 3, 2})
-	fmt.Print(res)
+	nodeNext := ListNode{Val: 3}
+	node1 := &ListNode{Val: 1}
+	node1.Next = &nodeNext
+	node2 := &node1
+	node1.Val = 2
+	fmt.Print((*node2).Val)
+	return
+}
+
+func getIntersectionNode(headA, headB *ListNode) *ListNode {
+	alen := listLength(headA)
+	blen := listLength(headB)
+	if alen >= blen {
+		diff := alen - blen
+		for i := 0; i < diff; i++ {
+			headA = headA.Next
+		}
+
+		for headA != headB {
+			headA = headA.Next
+			headB = headB.Next
+		}
+
+		return headA
+	} else {
+		return getIntersectionNode(headB, headA)
+	}
+}
+
+func listLength(head *ListNode) int {
+	if head == nil {
+		return 0
+	} else if head.Next == nil {
+		return 1
+	} else {
+		return 1 + listLength(head.Next)
+	}
+}
+
+func findMin(nums []int) int {
+	nlen := len(nums)
+	if nlen == 1 {
+		return nums[0]
+	}
+
+	lo := 0
+	hi := nlen - 1
+	for lo < hi {
+		if nums[lo] < nums[hi] {
+			return nums[lo]
+		}
+
+		if hi-lo == 1 {
+			return min(nums[lo], nums[hi])
+		}
+
+		mid := lo + (hi-lo)/2
+		if nums[mid] > nums[lo] {
+			lo = mid + 1
+		} else {
+			hi = mid
+		}
+	}
+
+	return nums[lo]
+}
+
+func maxProduct(nums []int) int {
+	nlen := len(nums)
+	minP := make([]int, nlen)
+	maxP := make([]int, nlen)
+	best := nums[0]
+	for i := 0; i < nlen; i++ {
+		minP[i] = nums[0]
+		maxP[i] = nums[0]
+		if i > 0 {
+			minP[i] = min(minP[i], min(minP[i-1]*nums[i], maxP[i-1]*nums[i]))
+			maxP[i] = max(maxP[i], max(minP[i-1]*nums[i], maxP[i-1]*nums[i]))
+			best = max(maxP[i], best)
+		}
+	}
+
+	return best
+}
+
+func sortList(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return head
+	}
+	middle := getMiddle(head)
+	return mergeSortedList(sortList(head), sortList(middle))
+}
+
+func mergeSortedList(p1 *ListNode, p2 *ListNode) *ListNode {
+	res := &ListNode{}
+	cur := res
+	for p1 != nil || p2 != nil {
+		if p1 != nil && p2 != nil {
+			if p1.Val < p2.Val {
+				cur.Next = p1
+				cur = cur.Next
+				p1 = p1.Next
+			} else {
+				cur.Next = p2
+				cur = cur.Next
+				p2 = p2.Next
+			}
+		} else if p1 == nil {
+			cur.Next = p2
+			break
+		} else {
+			cur.Next = p1
+			break
+		}
+	}
+
+	return res.Next
+}
+
+func getMiddle(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return nil
+	} else {
+		p1 := &ListNode{}
+		p1.Next = head
+		p2 := p1
+		for p2 != nil && p2.Next != nil && p2.Next.Next != nil {
+			p1 = p1.Next
+			p2 = p2.Next.Next
+		}
+
+		p1.Next = nil
+		return p2
+	}
+}
+
+func wordBreak(s string, wordDict []string) []string {
+	res := make([]string, 0)
+	cur := make([]string, 0)
+	dict := make(map[string]bool)
+	for _, v := range wordDict {
+		dict[v] = true
+	}
+
+	wordBreakDFS(&res, &cur, 0, dict, s)
+	return res
+}
+
+func wordBreakDFS(res *[]string, cur *[]string, start int, dict map[string]bool, s string) {
+	if start == len(s) {
+		*res = append(*res, strings.Join(*cur, " "))
+	} else {
+		for i := 0; i < 10; i++ {
+			endIndex := start + i
+			if endIndex < len(s) {
+				nextWord := s[start : endIndex+1]
+				if dict[nextWord] {
+					*cur = append(*cur, nextWord)
+					wordBreakDFS(res, cur, endIndex+1, dict, s)
+					*cur = (*cur)[:len(*cur)-1]
+				}
+			} else {
+				break
+			}
+		}
+	}
 }
 
 func longestConsecutive(nums []int) int {
