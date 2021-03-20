@@ -1,6 +1,6 @@
-package main
+package util
 
-func min(i int, j int) int {
+func Min(i int, j int) int {
 	if i < j {
 		return i
 	} else {
@@ -8,7 +8,7 @@ func min(i int, j int) int {
 	}
 }
 
-func max(i int, j int) int {
+func Max(i int, j int) int {
 	if i > j {
 		return i
 	} else {

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"leecodewithgolang/structure"
+	"leecodewithgolang/util"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,7 +15,7 @@ type MinStack struct {
 }
 
 /** initialize your data structure here. */
-func Constructor() MinStack {
+func MinStackConstructor() MinStack {
 	s := MinStack{
 		stack:    make([]int, 0),
 		minStack: make([]int, 0),
@@ -89,7 +90,7 @@ func findMin(nums []int) int {
 		}
 
 		if hi-lo == 1 {
-			return min(nums[lo], nums[hi])
+			return util.min(nums[lo], nums[hi])
 		}
 
 		mid := lo + (hi-lo)/2
@@ -112,9 +113,9 @@ func maxProduct(nums []int) int {
 		minP[i] = nums[0]
 		maxP[i] = nums[0]
 		if i > 0 {
-			minP[i] = min(minP[i], min(minP[i-1]*nums[i], maxP[i-1]*nums[i]))
-			maxP[i] = max(maxP[i], max(minP[i-1]*nums[i], maxP[i-1]*nums[i]))
-			best = max(maxP[i], best)
+			minP[i] = util.min(minP[i], util.min(minP[i-1]*nums[i], maxP[i-1]*nums[i]))
+			maxP[i] = util.max(maxP[i], util.max(minP[i-1]*nums[i], maxP[i-1]*nums[i]))
+			best = util.max(maxP[i], best)
 		}
 	}
 
@@ -552,10 +553,10 @@ func maxProfit4(k int, prices []int) int {
 	best := 0
 	for i := 1; i < len; i++ {
 		for j := 1; j <= k; j++ {
-			buyState[i][j] = max(buyState[i-1][j], sellState[i-1][j-1]-prices[i-1])
-			sellState[i][j] = max(sellState[i-1][j], buyState[i-1][j]+prices[i-1])
-			best = max(best, buyState[i][j])
-			best = max(best, sellState[i][j])
+			buyState[i][j] = util.max(buyState[i-1][j], sellState[i-1][j-1]-prices[i-1])
+			sellState[i][j] = util.max(sellState[i-1][j], buyState[i-1][j]+prices[i-1])
+			best = util.max(best, buyState[i][j])
+			best = util.max(best, sellState[i][j])
 		}
 	}
 	return best
@@ -622,7 +623,7 @@ func maxProfit1(prices []int) int {
 func maxProfit2(prices []int) int {
 	best := 0
 	for i := 1; i < len(prices); i++ {
-		best += max(0, prices[i]-prices[i-1])
+		best += util.max(0, prices[i]-prices[i-1])
 	}
 	return best
 }
@@ -635,12 +636,12 @@ func maxPathSum(root *structure.TreeNode) int {
 	best := root.Val
 	for k := range leftEndSum {
 		leftVal := 0
-		if k.Left != nil && max(leftEndSum[k.Left], rightEndSum[k.Left]) > leftVal {
-			leftVal = max(leftEndSum[k.Left], rightEndSum[k.Left])
+		if k.Left != nil && util.max(leftEndSum[k.Left], rightEndSum[k.Left]) > leftVal {
+			leftVal = util.max(leftEndSum[k.Left], rightEndSum[k.Left])
 		}
 		rightVal := 0
-		if k.Right != nil && max(rightEndSum[k.Right], leftEndSum[k.Right]) > rightVal {
-			rightVal = max(rightEndSum[k.Right], leftEndSum[k.Right])
+		if k.Right != nil && util.max(rightEndSum[k.Right], leftEndSum[k.Right]) > rightVal {
+			rightVal = util.max(rightEndSum[k.Right], leftEndSum[k.Right])
 		}
 		if rightVal+leftVal+k.Val > best {
 			best = rightVal + leftVal + k.Val
@@ -671,7 +672,7 @@ func maxEndSum(root *structure.TreeNode, leftEndSum map[*structure.TreeNode]int,
 	}
 
 	fmt.Printf("%d-%d-%d,", root.Val, leftEndSum[root], rightEndSum[root])
-	return max(leftEndSum[root], rightEndSum[root])
+	return util.max(leftEndSum[root], rightEndSum[root])
 }
 
 func ladderLength(beginWord string, endWord string, wordList []string) int {
@@ -855,7 +856,7 @@ func minimumTotal(triangle [][]int) int {
 			} else {
 				dp[i][j] = triangle[i][j] + dp[i+1][j]
 				if j+1 <= i+1 {
-					dp[i][j] = min(dp[i][j], triangle[i][j]+dp[i+1][j+1])
+					dp[i][j] = util.min(dp[i][j], triangle[i][j]+dp[i+1][j+1])
 				}
 			}
 		}
@@ -1870,9 +1871,9 @@ func minDistance(word1 string, word2 string) int {
 			} else if j == 0 {
 				dp[i][j] = i
 			} else {
-				dp[i][j] = 1 + min(min(dp[i-1][j], dp[i][j-1]), dp[i-1][j-1])
+				dp[i][j] = 1 + util.min(util.min(dp[i-1][j], dp[i][j-1]), dp[i-1][j-1])
 				if word1[i-1] == word2[j-1] {
-					dp[i][j] = min(dp[i][j], dp[i-1][j-1])
+					dp[i][j] = util.min(dp[i][j], dp[i-1][j-1])
 				}
 
 			}
@@ -2051,7 +2052,7 @@ func insert(intervals [][]int, newInterval []int) [][]int {
 func canJump(nums []int) bool {
 	possibleBest := 0
 	for i := 0; i < len(nums); i++ {
-		possibleBest = max(possibleBest, i+nums[i])
+		possibleBest = util.max(possibleBest, i+nums[i])
 		if possibleBest <= i {
 			return false
 		} else if possibleBest >= len(nums)-1 {
@@ -2245,7 +2246,7 @@ func jump(nums []int) int {
 	curBest := 0
 	possibleBest := 0
 	for i := 0; i < len; i++ {
-		possibleBest = max(possibleBest, i+nums[i])
+		possibleBest = util.max(possibleBest, i+nums[i])
 		// current stuck, has to do a jump
 		if curBest <= i {
 			count++

@@ -7,7 +7,7 @@ type LRUCache struct {
 	data     *DoubleLinkedList
 }
 
-func Constructor(capacity int) LRUCache {
+func LRUConstructor(capacity int) LRUCache {
 	return LRUCache{
 		cap:      capacity,
 		valueMap: make(map[int]int),

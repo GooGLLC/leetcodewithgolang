@@ -33,3 +33,14 @@ type TreeNode struct {
 	Left  *TreeNode
 	Right *TreeNode
 }
+
+type Queue []int
+
+func (q *Queue) Enqueue(i int) {
+	*q = append(*q, i)
+}
+func (q *Queue) Dequeue() int {
+	v := (*q)[0]
+	*q = (*q)[1:]
+	return v
+}
