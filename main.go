@@ -2,18 +2,110 @@ package main
 
 import (
 	"fmt"
-	. "leecodewithgolang/UnionFind"
-	. "leecodewithgolang/structure"
-	. "leecodewithgolang/util"
+	. "leetcodewithgolang/UnionFind"
+	. "leetcodewithgolang/structure"
+	. "leetcodewithgolang/util"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
 )
 
 func main() {
-	n := []int{0, 1, 2, 3, 4}
-	res := rob(n[:1])
+	res := containsNearbyAlmostDuplicate([]int{2147483647, -1, 2147483647}, 1, 2147483647)
 	fmt.Print(res)
+}
+
+func maximalSquare(matrix [][]byte) int {
+	h := len(matrix)
+	w := len(matrix[0])
+	dp := make([][]int, h*w)
+	for i := 0; i < h; i++ {
+		dp[i] = make([]int, w)
+	}
+	best := 0
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			if matrix[i][j] == '1' {
+				if i == 0 || j == 0 {
+					dp[i][j] = 1
+				} else {
+					dp[i][j] = 1 + Min(dp[i-1][j-1], Min(dp[i-1][j], dp[i][j-1]))
+				}
+			}
+			best = Max(best, dp[i][j])
+		}
+	}
+
+	return best * best
+}
+
+func containsNearbyAlmostDuplicate(nums []int, k int, t int) bool {
+	w := int64(t)
+	windows := w + 1
+	bucketToValue := make(map[int64]int64)
+	for i := 0; i < len(nums); i++ {
+		dequeue := i - k - 1
+		if dequeue >= 0 {
+			bucketIndex := int64(nums[dequeue]) / windows
+			if nums[dequeue] < 0 {
+				bucketIndex--
+			}
+			delete(bucketToValue, bucketIndex)
+		}
+
+		bucketIndex := int64(nums[i]) / windows
+		if nums[i] < 0 {
+			bucketIndex--
+		}
+		if _, ok := bucketToValue[bucketIndex]; ok {
+			return true
+		}
+		if lowerValue, ok := bucketToValue[bucketIndex-1]; ok {
+			if math.Abs(float64(int64(nums[i])-lowerValue)) <= float64(t) {
+				return true
+			}
+		}
+		if higerValue, ok := bucketToValue[bucketIndex+1]; ok {
+			if math.Abs(float64(int64(nums[i])-higerValue)) <= float64(t) {
+				return true
+			}
+		}
+
+		bucketToValue[bucketIndex] = int64(nums[i])
+	}
+
+	return false
+}
+
+func countNodes(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+
+	leftHeight := getLeftHeight(root)
+	rightHeight := getRightHeight(root)
+	if leftHeight == rightHeight {
+		return int(math.Pow(2.0, float64(leftHeight))) - 1
+	}
+
+	leftCount := countNodes(root.Left)
+	rightCount := countNodes(root.Right)
+	return 1 + leftCount + rightCount
+}
+
+func getRightHeight(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+	return 1 + getRightHeight(root.Right)
+}
+
+func getLeftHeight(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+	return 1 + getLeftHeight(root.Left)
 }
 
 func findOrder(numCourses int, prerequisites [][]int) []int {
@@ -197,34 +289,34 @@ func findRepeatedDnaSequences(s string) []string {
 	return res
 }
 
-//func calculateMinimumHP(dun [][]int) int {
-//	h := len(dun)
-//	w := len(dun[0])
-//	dp := make([][]int, h) // min health to enter this room
-//	for i := 0; i < h; i++{
-//		dp[i] = make([]int, w)
-//	}
-//
-//	for i := h-1; i >=0 ; i--{
-//		for j:= w-1; j >= 0; j--{
-//			if i == h - 1 && j == w- 1 {
-//				if dun[i][j] >= 0 {
-//					dp[i][j] = 1
-//				} else {
-//					dp[i][j] = -dun[i][j] + 1
-//				}
-//			} else if i == h - 1{
-//				dp[i][j] = max(1, dp[i][j+1] - dun[i][j])
-//			} else if j == w- 1 {
-//				dp[i][j] = max(1, dp[i+1][j] - dun[i][j])
-//			} else {
-//				dp[i][j] = max(1, min(dp[i][j+1], dp[i+1][j])- dun[i][j])
-//			}
-//		}
-//	}
-//
-//	return dp[0][0]
-//}
+func calculateMinimumHP(dun [][]int) int {
+	h := len(dun)
+	w := len(dun[0])
+	dp := make([][]int, h) // min health to enter this room
+	for i := 0; i < h; i++ {
+		dp[i] = make([]int, w)
+	}
+
+	for i := h - 1; i >= 0; i-- {
+		for j := w - 1; j >= 0; j-- {
+			if i == h-1 && j == w-1 {
+				if dun[i][j] >= 0 {
+					dp[i][j] = 1
+				} else {
+					dp[i][j] = -dun[i][j] + 1
+				}
+			} else if i == h-1 {
+				dp[i][j] = Max(1, dp[i][j+1]-dun[i][j])
+			} else if j == w-1 {
+				dp[i][j] = Max(1, dp[i+1][j]-dun[i][j])
+			} else {
+				dp[i][j] = Max(1, Min(dp[i][j+1], dp[i+1][j])-dun[i][j])
+			}
+		}
+	}
+
+	return dp[0][0]
+}
 
 func largestNumber(nums []int) string {
 	allzero := true

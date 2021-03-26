@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/leecodewithgolang.iml" filepath="$PROJECT_DIR$/.idea/leecodewithgolang.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/leetcodewithgolang.iml" filepath="$PROJECT_DIR$/.idea/leetcodewithgolang.iml" />
     </modules>
   </component>
 </project>

@@ -1,12 +1,12 @@
 package BSTIterator
 
-import . "leecodewithgolang/structure"
+import . "leetcodewithgolang/structure"
 
 type BSTIterator struct {
 	stack TreeStack
 }
 
-func Constructor(root *TreeNode) BSTIterator {
+func BSTConstructor(root *TreeNode) BSTIterator {
 	iterator := BSTIterator{
 		stack: TreeStack{},
 	}
