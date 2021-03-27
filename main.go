@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	. "leetcodewithgolang/UnionFind"
 	. "leetcodewithgolang/structure"
@@ -12,8 +13,218 @@ import (
 )
 
 func main() {
-	res := containsNearbyAlmostDuplicate([]int{2147483647, -1, 2147483647}, 1, 2147483647)
+	res := maxSlidingWindow([]int{-7, -8, 7, 5, 7, 1, 6, 0}, 4)
 	fmt.Print(res)
+}
+
+func searchMatrix2(matrix [][]int, target int) bool {
+	h := len(matrix)
+	w := len(matrix[0])
+	i := 0
+	j := w - 1
+	for {
+		if matrix[i][j] == target {
+			return true
+		} else if matrix[i][j] < target {
+			i++
+		} else {
+			j--
+		}
+
+		if i >= h || j < 0 {
+			return false
+		}
+	}
+
+	return false
+}
+
+func maxSlidingWindow(nums []int, k int) []int {
+	deque := make([]int, 0)
+	nlen := len(nums)
+	res := make([]int, nlen-k+1)
+	for i := 0; i < nlen; i++ {
+		for len(deque) > 0 && nums[i] > deque[0] {
+			deque = deque[1:]
+		}
+
+		// enque at head
+		deque = append([]int{nums[i]}, deque...)
+		curMax := deque[len(deque)-1]
+		if 1+i-k >= 0 {
+			res[1+i-k] = curMax
+			previousValue := nums[1+i-k]
+			if previousValue == deque[len(deque)-1] {
+				deque = deque[:len(deque)-1]
+			}
+		}
+	}
+
+	return res
+}
+
+func productExceptSelf(nums []int) []int {
+	nlen := len(nums)
+	res := make([]int, nlen)
+	res[0] = 1
+	for i := 1; i < nlen; i++ {
+		res[i] = res[i-1] * nums[i-1]
+	}
+	rightProduct := 1
+	for i := nlen - 2; i >= 0; i-- {
+		rightProduct *= nums[i+1]
+		res[i] = res[i] * rightProduct
+	}
+	return res
+}
+
+func majorityElement2(nums []int) []int {
+	var c1, c2, v1, v2 int
+	v1 = -1
+	v2 = -2
+	for i := 0; i < len(nums); i++ {
+		if nums[i] == v1 {
+			c1++
+		} else if nums[i] == v2 {
+			c2++
+		} else if c1 == 0 {
+			c1 = 1
+			v1 = nums[i]
+		} else if c2 == 0 {
+			c2 = 1
+			v2 = nums[i]
+		} else {
+			c1--
+			c2--
+		}
+	}
+
+	res := make([]int, 0)
+	limit := len(nums) / 3
+
+	count1 := 0
+	count2 := 0
+	for i := 0; i < len(nums); i++ {
+		if nums[i] == v1 {
+			count1++
+		} else if nums[i] == v2 {
+			count2++
+		}
+	}
+
+	if count1 > limit {
+		res = append(res, v1)
+	}
+
+	if count2 > limit {
+		res = append(res, v2)
+	}
+
+	return res
+}
+
+func kthSmallest(root *TreeNode, k int) int {
+	val := 0
+	kthSmallestHelper(root, &k, &val)
+	return val
+}
+
+func kthSmallestHelper(root *TreeNode, k *int, val *int) {
+	if root.Left != nil {
+		kthSmallestHelper(root.Left, k, val)
+	}
+
+	if *k == 1 {
+		*val = root.Val
+	}
+
+	*k--
+
+	if *k > 0 && root.Right != nil {
+		kthSmallestHelper(root.Right, k, val)
+	}
+}
+
+func getSkyline(buildings [][]int) [][]int {
+	blen := len(buildings)
+	points := make([]SkylinePoint, 2*blen)
+	for i := 0; i < blen; i++ {
+		points[i*2] = SkylinePoint{
+			index:   buildings[i][0],
+			isStart: true,
+			height:  buildings[i][2],
+		}
+		points[i*2+1] = SkylinePoint{
+			index:   buildings[i][1],
+			isStart: false,
+			height:  buildings[i][2],
+		}
+	}
+
+	sort.Slice(points, func(i, j int) bool {
+		p1 := points[i]
+		p2 := points[j]
+		if p1.index != p2.index {
+			return p1.index < p2.index
+		} else if p1.isStart != p2.isStart {
+			return p1.isStart
+		} else if p1.isStart {
+			return p1.height >= p2.height
+		} else {
+			return p1.height <= p2.height
+		}
+	})
+
+	maxHeap := &IntHeap{}
+	heap.Init(maxHeap)
+	res := make([][]int, 0)
+	curMaxHeight := -1
+	for i := 0; i < len(points); i++ {
+		curPoint := points[i]
+		if curPoint.isStart {
+			heap.Push(maxHeap, curPoint.height)
+		} else {
+			removeIndex := maxHeap.IndexOf(curPoint.height)
+			heap.Remove(maxHeap, removeIndex)
+		}
+
+		topValue := 0
+		if len(*maxHeap) > 0 {
+			topValue = (*maxHeap)[0]
+		}
+
+		if topValue != curMaxHeight {
+			res = append(res, []int{curPoint.index, topValue})
+			curMaxHeight = topValue
+		}
+	}
+	return res
+}
+
+type SkylinePoint struct {
+	index   int
+	isStart bool
+	height  int
+}
+
+func lowestCommonAncestor(root, p, q *TreeNode) *TreeNode {
+	if root == nil {
+		return nil
+	}
+
+	if root == p || root == q {
+		return root
+	}
+
+	leftRoot := lowestCommonAncestor(root.Left, p, q)
+	rightRoot := lowestCommonAncestor(root.Right, p, q)
+	if leftRoot != nil && rightRoot != nil {
+		return root
+	} else if leftRoot != nil {
+		return leftRoot
+	} else {
+		return rightRoot
+	}
 }
 
 func maximalSquare(matrix [][]byte) int {
