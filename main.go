@@ -13,8 +13,183 @@ import (
 )
 
 func main() {
-	res := maxSlidingWindow([]int{-7, -8, 7, 5, 7, 1, 6, 0}, 4)
+	res := addOperators("1000000009",
+		9)
 	fmt.Print(res)
+}
+
+func findDuplicate(nums []int) int {
+	swap := func(n []int, i, j int) {
+		t := n[i]
+		n[i] = n[j]
+		n[j] = t
+	}
+
+	for i := 0; i < len(nums); i++ {
+		wantIndex := nums[i] - 1
+		if wantIndex == i {
+			continue
+		}
+
+		if nums[wantIndex] == nums[i] {
+			return nums[i]
+		} else {
+			swap(nums, wantIndex, i)
+			i--
+		}
+	}
+
+	return 0
+}
+
+func moveZeroes(nums []int) {
+	nlen := len(nums)
+	nextPos := 0
+	for i := 0; i < nlen; i++ {
+		if nums[i] != 0 {
+			nums[nextPos] = nums[i]
+			nextPos++
+		}
+	}
+
+	for nextPos < nlen {
+		nums[nextPos] = 0
+		nextPos++
+	}
+}
+
+func addOperators(num string, target int) []string {
+	res := make([]string, 0)
+	nlen := len(num)
+	dlist := make([]string, nlen)
+	addOperatorsHelper(num, target, 0, &dlist, 0, 0, 0, "+", &res)
+	return res
+}
+
+func addOperatorsHelper(num string, target int, index int, op *[]string, curRes int, curNum int, lastNum int, lastOp string, res *[]string) {
+	if index == len(num) {
+		if (*op)[index-1] == "+" {
+			if curRes == target {
+				*res = append(*res, addOperatorsGetResult(num, op))
+			}
+		}
+	} else {
+		curDigit, _ := strconv.Atoi(string(num[index]))
+		if curDigit != 0 || curNum != 0 {
+			(*op)[index] = ""
+			// handle first number cannot be 0 if curNum is more 1 digit
+			addOperatorsHelper(num, target, index+1, op, curRes, curNum*10+curDigit, lastNum, lastOp, res)
+		}
+
+		(*op)[index] = "+"
+		addOperatorsHelper(num, target, index+1, op, computeCurResHelper(curRes, lastOp, curNum*10+curDigit, lastNum, curDigit), 0, 0, "+", res)
+
+		(*op)[index] = "-"
+		addOperatorsHelper(num, target, index+1, op, computeCurResHelper(curRes, lastOp, curNum*10+curDigit, lastNum, curDigit), 0, 0, "-", res)
+
+		(*op)[index] = "*"
+		addOperatorsHelper(num, target, index+1, op, curRes, 0, getLastNumberMuliplier(curNum*10+curDigit, lastNum, lastOp), "*", res)
+	}
+}
+
+func getLastNumberMuliplier(curN int, lastN int, op string) int {
+	if op == "*" {
+		return curN * lastN
+	} else if op == "+" {
+		return curN
+	} else {
+		return -curN
+	}
+}
+
+func computeCurResHelper(res int, op string, curNum int, lastNum int, curDigit int) int {
+	if op == "+" {
+		return res + curNum
+	} else if op == "-" {
+		return res - curNum
+	} else if op == "*" {
+		return res + curNum*lastNum
+	}
+
+	return 0
+}
+
+func addOperatorsGetResult(num string, op *[]string) string {
+	res := ""
+	for i := 0; i < len(num); i++ {
+		res += string(num[i])
+		if i != len(num)-1 {
+			res += (*op)[i]
+		}
+	}
+	return res
+}
+
+func hIndex2(citations []int) int {
+	lo := 0
+	hi := len(citations)
+	n := len(citations)
+
+	for lo < hi {
+		mid := (lo + hi) / 2
+		if mid == 0 || citations[n-mid] >= mid {
+			lo = mid + 1
+		} else {
+			hi = mid
+		}
+	}
+
+	if lo == 0 || citations[n-lo] >= lo {
+		return lo
+	} else {
+		return lo - 1
+	}
+}
+
+func hIndex(citations []int) int {
+	h := make([]int, 10001)
+	for _, v := range citations {
+		h[v]++
+	}
+
+	for i := 999; i >= 0; i-- {
+		h[i] += h[i+1]
+
+		if h[i] >= i {
+			return i
+		}
+	}
+
+	return 0
+}
+
+var numSquareMap map[int]int
+
+func numSquares(n int) int {
+	if n <= 1 {
+		return n
+	}
+
+	if numSquareMap == nil {
+		numSquareMap = make(map[int]int)
+	} else if v, ok := numSquareMap[n]; ok {
+		return v
+	}
+
+	best := n
+	for i := 1; i < n; i++ {
+		if i*i <= n {
+			cur := 1 + numSquares(n-i*i)
+			if cur < best {
+				best = cur
+			}
+		} else {
+			break
+		}
+	}
+
+	numSquareMap[n] = best
+	return best
 }
 
 func searchMatrix2(matrix [][]int, target int) bool {
@@ -175,7 +350,7 @@ func getSkyline(buildings [][]int) [][]int {
 		}
 	})
 
-	maxHeap := &IntHeap{}
+	maxHeap := &MaxIntHeap{}
 	heap.Init(maxHeap)
 	res := make([][]int, 0)
 	curMaxHeight := -1
